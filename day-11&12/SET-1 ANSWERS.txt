@@ -1,0 +1,122 @@
+#------------------------------------------------------------------- 
+# set-1
+#------------------------------------------------------------------- 
+#1.Write a query to display flight id,
+#from location, to location and ticket price 
+#of flights whose departure is in the 
+#month of april
+
+SELECT af.flight_id, af.from_location, af.to_location, afd.price
+FROM air_flight af,air_flight_details afd
+WHERE MONTHNAME(afd.flight_departure_date) = 'April';
+
+
+#-------------------------------------------------------------------
+#2.Write a query to display the average cost of the tickets in each flight on all scheduled dates. 
+#The query should display flight_id, from_location, to_location and Average price as "Price". 
+#Display the records sorted in ascending order based on flight id and then by from_location and then 
+#by to_location. 
+
+select af.flight_id,af.from_location,af.to_location,avg(afd.price) price 
+from air_flight af,air_flight_details afd
+group by af.flight_id
+order by af.flight_id,af.from_location,af.to_location;
+
+
+#-------------------------------------------------------------------
+#3.Write a query to display the customers who have booked tickets from Chennai to Hyderabad. 
+#The query should display profile_id, customer_name (combine first_name & last_name with comma 
+#in b/w) and address of the customer.
+
+select app.profile_id,concat(app.first_name,',',app.last_name) name,app.address 
+from air_passenger_profile app inner join air_ticket_info ati 
+on app.profile_id=ati.profile_id
+inner join air_flight af
+on ati.flight_id=af.flight_id
+where af.from_location='Chennai' and af.to_location='Hyderabad';
+
+
+#4.Give an alias to the name as customer_name. 
+ #Hint: Query should fetch unique customers irrespective of multiple tickets booked. 
+#Display the records sorted in ascending order based on profile id
+
+select distinct  profile_id,password, concat(first_name,last_name) as customer_name,address,mobile_number,email_id from  air_passenger_profile order by profile_id;
+
+
+#-------------------------------------------------------------------
+#4.Write a query to display profile id of the passenger(s) who has/have booked maximum number of tickets. 
+#In case of multiple records, display the records sorted in ascending order based on profile id.
+
+create table maxy as select profile_id,count(status) as st from air_ticket_info group by profile_id order by profile_id;  
+select profile_id,st from maxy where st=(select max(st) from maxy) order by profile_id;
+
+
+#-------------------------------------------------------------------
+#5. Write a query to display the total number of tickets as "No_of_Tickets" booked in each flight 
+#in ABC Airlines. The Query should display the flight_id, from_location, to_location and 
+#the number of tickets. 
+#Display only the flights in which atleast 1 ticket is booked. 
+#Display the records sorted in ascending order based on flight id
+
+SELECT af.flight_id, af.from_location, af.to_location,(af.total_seats-afd.available_seats) as No_of_Tickets 
+FROM air_flight af,air_flight_details afd
+WHERE (af.total_seats-afd.available_seats)>0 order by af.flight_id;
+
+
+#-------------------------------------------------------------------
+#6. Write a query to display the no of services offered by each flight and the total price 
+#of the services. The Query should display flight_id, number of services as "No_of_Services" 
+#and the cost as "Total_Price" in the same order.  
+#Order the result by Total Price in descending order and then by flight_id in descending order. 
+ 
+#Hint:The number of services can be calculated from the number of scheduled departure dates of the flight.
+
+SELECT flight_id,count(flight_departure_date) as No_of_Services ,sum(price) as Total_Price from air_flight_details group by flight_id order by flight_id;
+
+
+#-------------------------------------------------------------------
+#7.Write a query to display the number of passengers who have travelled in each flight in each scheduled date. 
+#The Query should display flight_id, flight_departure_date and the number of passengers as "No_of_Passengers" in the same order. 
+#Display the records sorted in ascending order based on flight id and then by flight departure date
+
+SELECT af.flight_id, afd.flight_departure_date,(af.total_seats-afd.available_seats) as No_of_Passengers 
+FROM air_flight af,air_flight_details afd
+WHERE (af.total_seats-afd.available_seats)>0 order by af.flight_id,afd.flight_departure_date;
+
+#-------------------------------------------------------------------
+#8.Write a query to display profile id of passenger(s) who booked minimum number of tickets. 
+#In case of multiple records, display the records sorted in ascending order based on profile id.
+
+create table mini as select profile_id,count(ticket_id) as mintic from air_ticket_info group by profile_id;
+select profile_id from mini where mintic=(select min(mintic) from mini);
+
+
+#-------------------------------------------------------------------
+# 9. Write a query to display unique passenger profile id,first name,mobile number and \
+# email address of passengers who booked ticket to travel from HYDERABAD to CHENNAI. 
+# Display the records sorted in ascending order based on profile id.
+
+select distinct app.profile_id,app.first_name,app.mobile_number,app.email_id
+from air_passenger_profile app inner join air_ticket_info ati 
+on app.profile_id=ati.profile_id
+inner join air_flight af
+on ati.flight_id=af.flight_id
+where af.from_location='Hyderabad' and af.to_location='Chennai' 
+order by app.profile_id;
+
+
+#-------------------------------------------------------------------
+# 10. Write a query to intimate the passengers who are boarding Chennai to Hyderabad Flight on 6th May 2013 stating the delay of 1hr in the departure time. 
+# The Query should display the passenger’s profile_id, first_name,last_name, flight_id, flight_departure_date,  
+# actual departure time , actual arrival time , delayed departure time as "Delayed_Departure_Time", delayed arrival time as "Delayed_Arrival_Time" 
+# Hint: Distinct  Profile ID should be displayed irrespective of multiple tickets booked by the same profile. 
+# Display the records sorted in ascending order based on passenger's profile id. 
+
+select distinct app.profile_id,app.first_name,app.last_name,ati.flight_id,ati.flight_departure_date,af.departure_time,af.arival_time,
+addtime(af.departure_time,'01:00') as Delayed_departure_time,addtime(af.arival_time,'01:00') as Delayed_arival_time
+from air_passenger_profile app inner join air_ticket_info ati 
+on app.profile_id=ati.profile_id
+inner join air_flight af
+on ati.flight_id=af.flight_id
+where af.from_location='Chennai' and af.to_location='Hyderabad' or ati.flight_departure_date='2013-06-06'; 
+#------------------------------------------------------------------- 
